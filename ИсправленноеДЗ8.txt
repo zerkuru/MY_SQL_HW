@@ -1,0 +1,109 @@
+Исправление задание 8
+2) Количество лайков 10 самым молодым пользователям
+
+имеется: 
+mysql> DESCRIBE likes
+    -> ;
++-----------+------------------------+------+-----+---------+----------------+
+| Field     | Type                   | Null | Key | Default | Extra          |
++-----------+------------------------+------+-----+---------+----------------+
+| id        | bigint unsigned        | NO   | PRI | NULL    | auto_increment |
+| user_id   | int unsigned           | YES  | MUL | NULL    |                |
+| post_id   | bigint unsigned        | YES  | MUL | NULL    |                |
+| like_type | enum('like','dislike') | YES  |     | NULL    |                |
++-----------+------------------------+------+-----+---------+----------------+
+4 rows in set (0.00 sec)
+
+mysql> SELECT * FROM likes;
++----+---------+---------+-----------+
+| id | user_id | post_id | like_type |
++----+---------+---------+-----------+
+|  1 |      53 |      11 | like      |
+|  2 |      53 |      10 | like      |
+|  3 |      53 |      12 | like      |
+|  4 |      53 |      14 | dislike   |
+|  5 |      53 |      20 | like      |
+|  6 |      54 |      11 | like      |
+|  7 |      54 |      10 | like      |
+|  8 |      54 |      12 | like      |
+|  9 |      54 |      14 | like      |
+| 10 |      54 |      20 | like      |
+| 11 |       5 |      11 | like      |
+| 12 |       5 |      10 | dislike   |
+| 13 |       5 |      12 | like      |
+| 14 |       5 |      14 | like      |
+| 15 |       5 |      20 | like      |
+
+
+в данной конфигурации базы нет target_id, лайки ставятся постам, поэтому найти можно самых молодых пользователей - авторов постов. 
+
+
+mysql> SELECT 
+    -> ag.user_id AS user_id,
+    -> (YEAR(CURRENT_DATE)-YEAR(birthday))-(RIGHT(CURRENT_DATE,5)<RIGHT(birthday,5)) as age,
+    -> SUM(tp.like_count) as like_counts
+    -> FROM  profiles ag
+    -> INNER JOIN
+    -> (SELECT 
+    -> l.post_id AS post_id,
+    -> COUNT(l.id) AS like_count,
+    -> p.user_id AS post_writer
+    -> FROM likes l 
+    -> LEFT JOIN posts p 
+    -> ON l.post_id = p.id
+    -> GROUP BY post_id, post_writer) AS tp
+    -> ON ag.user_id = tp.post_writer
+    -> GROUP BY user_id, age
+    -> ORDER BY like_counts DESC LIMIT 10;
++---------+------+-------------+
+| user_id | age  | like_counts |
++---------+------+-------------+
+|      12 |    2 |          25 |
+|      87 |    4 |          15 |
+|      76 |    9 |           5 |
+|       3 |   27 |           5 |
++---------+------+-------------+
+4 rows in set (0.00 sec)
+
+mysql> 
+
+
+3) Возможно, можно использовать вложенный запрос здесь, для ясности,
+в одном посчитать в колонках количества, а потом уже использовать их в формуле
+используются уникальные идентификаторы 
+
+mysql> SELECT
+    -> ua.user_id,
+    -> ua.like_times + 3*ua.message_times + 5*ua.posts_times AS activity_value
+    -> FROM
+    -> (SELECT 
+    ->  ag.user_id AS user_id,
+    ->  COUNT(DISTINCT l.id) AS like_times,
+    ->  COUNT(DISTINCT m.id) AS message_times,
+    ->  COUNT(DISTINCT pos.id) AS posts_times
+    ->  FROM  profiles ag
+    ->  LEFT JOIN
+    ->  likes l ON l.user_id = ag.user_id
+    ->  LEFT JOIN
+    ->  messages m ON m.from_user_id = ag.user_id
+    ->  LEFT JOIN
+    ->  posts pos ON pos.user_id = ag.user_id
+    ->  GROUP BY user_id) AS ua
+    ->  ORDER BY activity_value DESC LIMIT 10;
++---------+----------------+
+| user_id | activity_value |
++---------+----------------+
+|      12 |            208 |
+|      87 |             64 |
+|       1 |             49 |
+|      54 |             23 |
+|      10 |             19 |
+|       5 |             18 |
+|      65 |             18 |
+|      76 |             17 |
+|       2 |             16 |
+|      16 |             16 |
++---------+----------------+
+10 rows in set (0.00 sec)
+
+
