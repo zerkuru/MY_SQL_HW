@@ -1,0 +1,162 @@
+Задание 9 ДЗ (Видеоурок)
+
+1. В базе данных shop и sample присутствуют одни и те же таблицы, учебной базы данных.
+Переместите запись id = 1 из таблицы shop.users в таблицу sample.users. Используйте
+транзакции.
+имеется: 
+
+mysql> USE sample;
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+
+Database changed
+mysql> SELECT * FROM users;
++----+--------------------+-------------+---------------------+---------------------+
+| id | name               | birthday_at | created_at          | updated_at          |
++----+--------------------+-------------+---------------------+---------------------+
+|  1 | Александр          | 1985-05-20  | 2021-05-16 22:59:49 | 2021-05-16 22:59:49 |
+|  2 | Сергей             | 1988-02-14  | 2021-05-16 22:59:49 | 2021-05-16 22:59:49 |
+|  3 | Иван               | 1998-01-12  | 2021-05-16 22:59:49 | 2021-05-16 22:59:49 |
+|  4 | Мария              | 1992-08-29  | 2021-05-16 22:59:49 | 2021-05-16 22:59:49 |
++----+--------------------+-------------+---------------------+---------------------+
+4 rows in set (0.00 sec)
+
+mysql> USE shop;
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+
+Database changed
+mysql> SELECT * FROM users;
++----+--------------------+-------------+---------------------+---------------------+
+| id | name               | birthday_at | created_at          | updated_at          |
++----+--------------------+-------------+---------------------+---------------------+
+|  1 | Геннадий           | 1990-10-05  | 2021-05-09 13:31:19 | 2021-05-09 13:31:19 |
+|  2 | Наталья            | 1984-11-12  | 2021-05-09 13:31:19 | 2021-05-09 13:31:19 |
+|  3 | Александр          | 1985-05-20  | 2021-05-09 13:31:19 | 2021-05-09 13:31:19 |
+|  4 | Сергей             | 1988-02-14  | 2021-05-09 13:31:19 | 2021-05-09 13:31:19 |
+|  5 | Иван               | 1998-01-12  | 2021-05-09 13:31:19 | 2021-05-09 13:31:19 |
+|  6 | Мария              | 1992-08-29  | 2021-05-09 13:31:19 | 2021-05-09 13:31:19 |
++----+--------------------+-------------+---------------------+---------------------+
+6 rows in set (0.00 sec)
+
+транзакция:
+
+mysql> USE sample;
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+
+Database changed
+mysql> START TRANSACTION;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> INSERT INTO users (name, birthday_at, created_at, updated_at) VALUES ((SELECT name FROM shop.users WHERE id=1), (SELECT birthday_at FROM shop.users WHERE id=1), (SELECT created_at FROM shop.users WHERE id=1), (SELECT updated_at FROM shop.users WHERE id=1));
+Query OK, 1 row affected (0.00 sec)
+
+mysql> COMMIT;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> SELECT * FROM users;
++----+--------------------+-------------+---------------------+---------------------+
+| id | name               | birthday_at | created_at          | updated_at          |
++----+--------------------+-------------+---------------------+---------------------+
+|  1 | Александр          | 1985-05-20  | 2021-05-16 22:59:49 | 2021-05-16 22:59:49 |
+|  2 | Сергей             | 1988-02-14  | 2021-05-16 22:59:49 | 2021-05-16 22:59:49 |
+|  3 | Иван               | 1998-01-12  | 2021-05-16 22:59:49 | 2021-05-16 22:59:49 |
+|  4 | Мария              | 1992-08-29  | 2021-05-16 22:59:49 | 2021-05-16 22:59:49 |
+|  5 | Геннадий           | 1990-10-05  | 2021-05-09 13:31:19 | 2021-05-09 13:31:19 |
++----+--------------------+-------------+---------------------+---------------------+
+5 rows in set (0.00 sec)
+
+mysql> 
+
+
+
+2. Создайте представление, которое выводит название name товарной позиции из таблицы
+products и соответствующее название каталога name из таблицы catalogs.
+
+mysql> USE shop;
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+
+Database changed
+mysql> CREATE VIEW prod_cat AS
+    -> SELECT pr.name AS product,
+    -> cat.name AS catalog 
+    -> FROM products pr LEFT JOIN catalogs cat ON pr.catalog_id = cat.id
+    -> ORDER BY catalog ASC;
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> SELECT * FROM prod_cat;
++-------------------------+-------------------------------------+
+| product                 | catalog                             |
++-------------------------+-------------------------------------+
+| Palit PCI-E             | Видеокарты                          |
+| Palit PCI-E             | Видеокарты                          |
+| Samsung Portable        | Жесткие диски                       |
+| MSI B250M GAMING PRO    | Материнские платы                   |
+| Gigabyte H310M S2H      | Материнские платы                   |
+| ASUS ROG MAXIMUS X HERO | Материнские платы                   |
+| Esonic G31CEL2          | Материнские платы                   |
+| ASUS Prime H310M        | Материнские платы                   |
+| Esonic G31CEL2          | Материнские платы                   |
+| DDR4 Kingston 16GB      | Оперативная память                  |
+| DDR4 Kingston 8GB       | Оперативная память                  |
+| Intel Core i7           | Процессоры                          |
+| Intel Core i3-8100      | Процессоры                          |
+| Intel Core i5-7400      | Процессоры                          |
+| AMD FX-8320E            | Процессоры                          |
+| AMD FX-8320             | Процессоры                          |
+| Intel Core i5           | Процессоры                          |
+| AMD Ryzen 3             | Процессоры                          |
+| AMD Ryzen 5             | Процессоры                          |
++-------------------------+-------------------------------------+
+19 rows in set (0.00 sec)
+
+mysql> 
+
+
+1. Создайте хранимую функцию hello(), которая будет возвращать приветствие, в зависимости от
+текущего времени суток. С 6:00 до 12:00 функция должна возвращать фразу "Доброе утро", с
+12:00 до 18:00 функция должна возвращать фразу "Добрый день", с 18:00 до 00:00 — "Добрый
+вечер", с 00:00 до 6:00 — "Доброй ночи".
+
+DELIMITER //
+
+CREATE FUNCTION hello ()
+AS
+BEGIN
+   SET @y = (SELECT CAST(SUBSTRING(CAST(NOW() AS CHAR), 12, 2) AS UNSIGNED));
+   IF @y <= 6 THEN
+    RETURN('Доброй ночи!') 
+   ELSEIF @y <= 12 THEN
+    RETURN('Доброе утро!')
+   ELSEIF @y <= 18 THEN
+    RETURN('Добрый день!')
+   ELSE 
+    RETURN('Добрый вечер!')
+   ENDIF;
+    RETURN ''
+END//
+
+2. В таблице products есть два текстовых поля: name с названием товара и description с его
+описанием. Допустимо присутствие обоих полей или одно из них. Ситуация, когда оба поля
+принимают неопределенное значение NULL неприемлема. Используя триггеры, добейтесь
+того, чтобы одно из этих полей или оба поля были заполнены. При попытке присвоить полям
+NULL-значение необходимо отменить операцию.
+
+CREATE TRIGGER check_catalog_description BEFORE INSERT ON products
+FOR EACH ROW
+BEGIN
+DECLARE name VARCHAR(255);
+DECLARE descript VARCHAR(255);
+SELECT name INTO name FROM NEW;
+SELECT description INTO descript FROM NEW;
+IF name IS NULL AND descript IS NULL THEN
+ROLLBACK;
+ELSE
+ENDIF
+END//
+
+
+SET NEW.catalog_id = COALESCE(NEW.catalog_id, OLD.catalog_id, cat_id);
+END//
