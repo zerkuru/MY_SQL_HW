@@ -1,0 +1,117 @@
+задание 10
+Задания на БД vk:
+1) Проанализировать какие запросы могут выполняться наиболее часто в процессе работы приложения и добавить необходимые индексы.
+
+наиболее часто, для соединения с данными других таблиц, может использоваться таблица profiles
+mysql> CREATE INDEX profiles_birthdays ON profiles(birthday);
+Query OK, 0 rows affected (0.04 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> CREATE INDEX profiles_city ON profiles(city);
+Query OK, 0 rows affected (0.03 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+также наиболее быстро могут расти таблицы messages, likes, их нужно проиндексировать:
+
+mysql> CREATE INDEX profiles_birthdays ON profiles(birthday);
+Query OK, 0 rows affected (0.04 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> CREATE INDEX profiles_city ON profiles(city);
+Query OK, 0 rows affected (0.03 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> CREATE INDEX messages_from ON messages(from_user_id);
+CREATE INDEX messages_from ON messages(from_user_id);
+^C
+mysql> CREATE INDEX mess_from ON messages(from_user_id);
+Query OK, 0 rows affected (0.03 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> CREATE INDEX mess_to ON messages(to_user_id);
+Query OK, 0 rows affected (0.03 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> CREATE INDEX mess_del ON messages(is_delivered);
+Query OK, 0 rows affected (0.03 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> CREATE INDEX likes_post ON likes(post_id);
+Query OK, 0 rows affected (0.04 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> CREATE INDEX likes_user ON likes(user_id);
+Query OK, 0 rows affected (0.03 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+
+
+
+mysql> SHOW INDEX FROM users;
++-------+------------+--------------------------------+--------------+-------------+-----------+-------------+----------+--------+------+------------+---------+---------------+---------+------------+
+| Table | Non_unique | Key_name                       | Seq_in_index | Column_name | Collation | Cardinality | Sub_part | Packed | Null | Index_type | Comment | Index_comment | Visible | Expression |
++-------+------------+--------------------------------+--------------+-------------+-----------+-------------+----------+--------+------+------------+---------+---------------+---------+------------+
+| users |          0 | PRIMARY                        |            1 | id          | A         |         110 |     NULL |   NULL |      | BTREE      |         |               | YES     | NULL       |
+| users |          0 | email                          |            1 | email       | A         |         110 |     NULL |   NULL |      | BTREE      |         |               | YES     | NULL       |
+| users |          0 | phone                          |            1 | phone       | A         |         110 |     NULL |   NULL |      | BTREE      |         |               | YES     | NULL       |
+| users |          0 | users_email_uq                 |            1 | email       | A         |         110 |     NULL |   NULL |      | BTREE      |         |               | YES     | NULL       |
+| users |          1 | users_first_name_last_name_idx |            1 | first_name  | A         |         109 |     NULL |   NULL |      | BTREE      |         |               | YES     | NULL       |
+| users |          1 | users_first_name_last_name_idx |            2 | last_name   | A         |         110 |     NULL |   NULL |      | BTREE      |         |               | YES     | NULL       |
++-------+------------+--------------------------------+--------------+-------------+-----------+-------------+----------+--------+------+------------+---------+---------------+---------+------------+
+6 rows in set (0.01 sec)
+
+mysql> SHOW INDEX FROM profiles;
++----------+------------+--------------------+--------------+-------------+-----------+-------------+----------+--------+------+------------+---------+---------------+---------+------------+
+| Table    | Non_unique | Key_name           | Seq_in_index | Column_name | Collation | Cardinality | Sub_part | Packed | Null | Index_type | Comment | Index_comment | Visible | Expression |
++----------+------------+--------------------+--------------+-------------+-----------+-------------+----------+--------+------+------------+---------+---------------+---------+------------+
+| profiles |          0 | PRIMARY            |            1 | user_id     | A         |         110 |     NULL |   NULL |      | BTREE      |         |               | YES     | NULL       |
+| profiles |          1 | profiles_birthdays |            1 | birthday    | A         |         110 |     NULL |   NULL | YES  | BTREE      |         |               | YES     | NULL       |
+| profiles |          1 | profiles_city      |            1 | city        | A         |         110 |     NULL |   NULL | YES  | BTREE      |         |               | YES     | NULL       |
++----------+------------+--------------------+--------------+-------------+-----------+-------------+----------+--------+------+------------+---------+---------------+---------+------------+
+3 rows in set (0.01 sec)
+
+mysql> SHOW INDEX FROM likes;
++-------+------------+------------+--------------+-------------+-----------+-------------+----------+--------+------+------------+---------+---------------+---------+------------+
+| Table | Non_unique | Key_name   | Seq_in_index | Column_name | Collation | Cardinality | Sub_part | Packed | Null | Index_type | Comment | Index_comment | Visible | Expression |
++-------+------------+------------+--------------+-------------+-----------+-------------+----------+--------+------+------------+---------+---------------+---------+------------+
+| likes |          0 | PRIMARY    |            1 | id          | A         |          50 |     NULL |   NULL |      | BTREE      |         |               | YES     | NULL       |
+| likes |          0 | id         |            1 | id          | A         |          50 |     NULL |   NULL |      | BTREE      |         |               | YES     | NULL       |
+| likes |          1 | likes_post |            1 | post_id     | A         |          10 |     NULL |   NULL | YES  | BTREE      |         |               | YES     | NULL       |
+| likes |          1 | likes_user |            1 | user_id     | A         |          17 |     NULL |   NULL | YES  | BTREE      |         |               | YES     | NULL       |
++-------+------------+------------+--------------+-------------+-----------+-------------+----------+--------+------+------------+---------+---------------+---------+------------+
+4 rows in set (0.02 sec)
+
+mysql> SHOW INDEX FROM messages;
++----------+------------+-----------+--------------+--------------+-----------+-------------+----------+--------+------+------------+---------+---------------+---------+------------+
+| Table    | Non_unique | Key_name  | Seq_in_index | Column_name  | Collation | Cardinality | Sub_part | Packed | Null | Index_type | Comment | Index_comment | Visible | Expression |
++----------+------------+-----------+--------------+--------------+-----------+-------------+----------+--------+------+------------+---------+---------------+---------+------------+
+| messages |          0 | PRIMARY   |            1 | id           | A         |         150 |     NULL |   NULL |      | BTREE      |         |               | YES     | NULL       |
+| messages |          1 | mess_from |            1 | from_user_id | A         |          81 |     NULL |   NULL |      | BTREE      |         |               | YES     | NULL       |
+| messages |          1 | mess_to   |            1 | to_user_id   | A         |          82 |     NULL |   NULL |      | BTREE      |         |               | YES     | NULL       |
+| messages |          1 | mess_del  |            1 | is_delivered | A         |           2 |     NULL |   NULL | YES  | BTREE      |         |               | YES     | NULL       |
++----------+------------+-----------+--------------+--------------+-----------+-------------+----------+--------+------+------------+---------+---------------+---------+------------+
+4 rows in set (0.01 sec)
+
+mysql> 
+
+
+2) Задание на оконные функции
+Построить запрос, который будет выводить следующие столбцы:
+
+имя группы
+среднее количество пользователей в группах (сумма количестива пользователей во всех группах делённая на количество групп)
+самый молодой пользователь в группе (желательно вывести имя и фамилию)
+самый старший пользователь в группе (желательно вывести имя и фамилию)
+количество пользователей в группе
+всего пользователей в системе (количество пользователей в таблице users)
+отношение в процентах для последних двух значений (общее количество пользователей в группе / всего пользователей в системе) * 100
+
+SELECT DISTINCT
+c.name,
+COUNT(DISTINCT cu.user_id) OVER (PARTITION BY c.id) AS users_in_group,
+AVG(COUNT(DISTINCT cu.user_id) OVER (PARTITION BY c.id)) AS average
+FROM communities c
+RIGHT JOIN communities_users cu ON cu.community_id = c.id;
+
+
+//пока не получилось правильно использовать оконные функции, если можно, пересдам эту задачу позже 

@@ -1,0 +1,150 @@
+Переписать запросы к ДЗ 6, используя JOIN
+что имеется:
+
+mysql> DESCRIBE likes;
++-----------+------------------------+------+-----+---------+----------------+
+| Field     | Type                   | Null | Key | Default | Extra          |
++-----------+------------------------+------+-----+---------+----------------+
+| id        | bigint unsigned        | NO   | PRI | NULL    | auto_increment |
+| user_id   | int unsigned           | YES  | MUL | NULL    |                |
+| post_id   | bigint unsigned        | YES  | MUL | NULL    |                |
+| like_type | enum('like','dislike') | YES  |     | NULL    |                |
++-----------+------------------------+------+-----+---------+----------------+
+4 rows in set (0.00 sec)
+
+mysql> DESCRIBE posts;
++-------------+------------------------------------------------------+------+-----+---------+----------------+
+| Field       | Type                                                 | Null | Key | Default | Extra          |
++-------------+------------------------------------------------------+------+-----+---------+----------------+
+| id          | bigint unsigned                                      | NO   | PRI | NULL    | auto_increment |
+| user_id     | int unsigned                                         | YES  | MUL | NULL    |                |
+| media_id    | int unsigned                                         | YES  | MUL | NULL    |                |
+| access_type | enum('all','friends_only','friends_and_communities') | YES  |     | NULL    |                |
+| text        | longtext                                             | YES  |     | NULL    |                |
+| created_at  | datetime                                             | YES  |     | NULL    |                |
++-------------+------------------------------------------------------+------+-----+---------+----------------+
+6 rows in set (0.00 sec)
+
+
+
+1) Кто поставил больше лайков, F или M?
+mysql> SELECT 
+    -> p.gender,
+    -> l.like_type, 
+    -> SUM(1) as like_case
+    -> FROM profiles p
+    -> INNER JOIN 
+    -> likes l USING (user_id)
+    -> GROUP BY p.gender, l.like_type;
++--------+-----------+-----------+
+| gender | like_type | like_case |
++--------+-----------+-----------+
+| F      | like      |        17 |
+| F      | dislike   |         5 |
+| M      | like      |        24 |
+| M      | dislike   |         4 |
++--------+-----------+-----------+
+4 rows in set (0.00 sec)
+
+итого: больше лайков поставили M, а больше дислайков F, в сумме тоже больше M
+
+2) Количество лайков 10 самых молодых пользователей?
+
+mysql> SELECT 
+    -> ag.user_id AS user_id,
+    -> COUNT(l.id) as like_cases,
+    -> (YEAR(CURRENT_DATE)-YEAR(birthday))-(RIGHT(CURRENT_DATE,5)<RIGHT(birthday,5)) as age
+    -> FROM  profiles ag
+    -> INNER JOIN
+    -> likes l ON l.user_id = ag.user_id
+    -> GROUP BY user_id, age
+    -> ORDER BY age ASC LIMIT 10;
++---------+------------+------+
+| user_id | like_cases | age  |
++---------+------------+------+
+|      53 |          5 |    0 |
+|      12 |          6 |    2 |
+|       6 |          1 |    3 |
+|      87 |          1 |    4 |
+|      18 |          1 |    9 |
+|      76 |          2 |    9 |
+|       1 |          1 |   10 |
+|      54 |          5 |   16 |
+|      14 |          5 |   21 |
+|      99 |          5 |   26 |
++---------+------------+------+
+10 rows in set (0.00 sec)
+
+
+3) 10 пользователей с наименьшей активностью в соц.сети, 
+где активность считается как: 
++ 1 за каждый лайк,
++ 5 за каждый пост,
++ 3 за каждое сообщение
+
+10 наибольшая активность:
+
+SELECT 
+ ag.user_id AS user_id,
+ COUNT(l.id) + COUNT(m.id)*3 + COUNT(pos.id)*5 as like_cases
+ FROM  profiles ag
+ LEFT JOIN
+ likes l ON l.user_id = ag.user_id
+ LEFT JOIN
+ messages m ON m.from_user_id = ag.user_id
+ LEFT JOIN
+ posts pos ON pos.user_id = ag.user_id
+ GROUP BY user_id
+ ORDER BY like_cases DESC LIMIT 10;
+
+ +---------+------------+
+| user_id | like_cases |
++---------+------------+
+|      12 |       8208 |
+|      54 |        135 |
+|      87 |        108 |
+|       5 |         90 |
+|      14 |         90 |
+|      53 |         90 |
+|       1 |         81 |
+|      10 |         48 |
+|      99 |         40 |
+|      25 |         40 |
+
+
+10 наименьшая активность:
+
+
+mysql> SELECT 
+    ->  ag.user_id AS user_id,
+    ->  COUNT(l.id) + COUNT(m.id)*3 + COUNT(pos.id)*5 as like_cases
+    ->  FROM  profiles ag
+    ->  LEFT JOIN
+    ->  likes l ON l.user_id = ag.user_id
+    ->  LEFT JOIN
+    ->  messages m ON m.from_user_id = ag.user_id
+    ->  LEFT JOIN
+    ->  posts pos ON pos.user_id = ag.user_id
+    ->  GROUP BY user_id
+    ->  ORDER BY like_cases ASC LIMIT 10;
++---------+------------+
+| user_id | like_cases |
++---------+------------+
+|      69 |          0 |
+|      33 |          0 |
+|      63 |          0 |
+|      43 |          0 |
+|      44 |          0 |
+|      36 |          0 |
+|      22 |          0 |
+|       8 |          0 |
+|      24 |          0 |
+|     110 |          0 |
++---------+------------+
+10 rows in set (0.01 sec)
+
+
+
+
+
+
